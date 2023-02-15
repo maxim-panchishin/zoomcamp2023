@@ -1,0 +1,145 @@
+version: '3.5'
+
+networks:
+  prefect:
+    name: prefect
+
+services:
+  # --------------------------------------#
+  #               Postgres                #
+  # --------------------------------------#
+  postgres:
+    image: postgres:14
+    command:
+      - postgres
+      - -c
+      - max_connections=150
+    environment:
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: test-password
+      POSTGRES_DB: prefect_server
+    healthcheck:
+      interval: 10s
+      retries: 60
+      start_period: 2s
+      test: pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER} | grep "accepting connections" || exit 1
+      timeout: 2s
+    ports:
+    - published: 5434
+      target: 5432
+    restart: on-failure
+    volumes:
+      - "c:/Users/Max Panchishin/Repository/zoomcamp/week2/postgresql:/var/lib/postgresql/data"
+    networks:
+      - prefect
+
+  # --------------------------------------#
+  #             Prefect Server            #
+  # --------------------------------------#
+  prefect-server:
+    image: prefecthq/prefect:2-python3.10
+    command:
+      - prefect
+      - orion
+      - start
+    ports:
+      - "4200:4200"
+    depends_on:
+      postgres:
+        condition: service_started
+    volumes:
+      - "c:/Users/Max Panchishin/Repository/zoomcamp/week2:/opt/prefect:rw"
+      - "c:/Users/Max Panchishin/Repository/zoomcamp/week2/flows:/opt/prefect/flows:rw"
+    environment:
+      PREFECT_ORION_API_HOST: 0.0.0.0
+      PREFECT_ORION_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:test-password@postgres:5432/prefect_server
+      PREFECT_ORION_ANALYTICS_ENABLED: "false"
+      PREFECT_LOGGING_SERVER_LEVEL: WARNING
+      PREFECT_API_URL: http://prefect-server:4200/api
+    networks:
+      - prefect
+
+  # --------------------------------------#
+  #             Docker Agent              #
+  # --------------------------------------#
+  # prefect-agent:
+  #   image: ${PREFECT_AGENT_IMAGE}
+  #   command:
+  #     - prefect
+  #     - agent
+  #     - start
+  #     - -q
+  #     - default
+  #   depends_on:
+  #     prefect-server:
+  #       condition: service_started
+  #   environment:
+  #     PREFECT_API_URL: http://prefect-server:4200/api
+  #     PREFECT_LOGGING_LEVEL: DEBUG
+  #     DOCKER_HOST: unix://var/run/docker.sock
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #     - prefect
+
+  # --------------------------------------#
+  #         Minio for storage             #
+  # --------------------------------------#
+  minio:
+    image: minio/minio
+    environment:
+      - MINIO_ROOT_USER=blablabla
+      - MINIO_ROOT_PASSWORD=blablabla
+    volumes:
+      - "c:/Users/Max Panchishin/Repository/zoomcamp/week2/minio:/data"
+    entrypoint: /bin/bash 
+    command: "-c 'mkdir -p /data/prefect-flows && sleep 10 && minio server /data --console-address :9001'"
+    ports:
+      - published: 9000
+        target: 9000
+      - published: 9001
+        target: 9001
+    networks:
+      - prefect
+  
+  agent:
+    image: prefecthq/prefect:2.8.0-python3.11
+    restart: always
+    entrypoint: ["prefect", "agent", "start", "-q", "YOUR_WORK_QUEUE_NAME"]
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    profiles: ["agent"]
+    networks:
+      - prefect
+      
+  # --------------------------------------#
+  #         Database Postgres             #
+  # --------------------------------------#
+  # pgdatabase:
+  #   image: postgres:14
+  #   environment:
+  #     - POSTGRES_USER=root
+  #     - POSTGRES_PASSWORD=root
+  #     - POSTGRES_DB=ny_taxi
+  #   volumes:
+  #     - "c:/Users/Max Panchishin/Repository/zoomcamp/week1/122_ingesting/ny_taxi_postgres_data:/var/lib/postgresql/data:rw"
+  #   ports:
+  #     - published: 5431
+  #       target: 5432
+  #   networks:
+  #     - prefect
+
+  # # --------------------------------------#
+  # #               PG Admin                #
+  # # --------------------------------------#
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+  #     - PGADMIN_DEFAULT_PASSWORD=root
+  #   ports:
+  #     - published: 8080
+  #       target: 80
+  #   networks:
+  #     - prefect
+
