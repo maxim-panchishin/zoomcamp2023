@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: staging
+    database: zoomcamp2023-377809
+    schema: trip_taxi_data
+
+    tables:
+      - name: tripdata_partitioned
+      - name: tripdata_nonpartitioned
