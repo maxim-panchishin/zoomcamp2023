@@ -1,8 +1,8 @@
 # Week 3
 ## Data Warehouse: Big Query
 
-[Homework link](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/cohorts/2023/week_3_data_warehouse/homework.md)
-[Solution link](https://github.com/maxim-panchishin/zoomcamp2023/blob/main/week2/hw3.sql)
+- [Homework link](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/cohorts/2023/week_3_data_warehouse/homework.md)
+- [Solution link](https://github.com/maxim-panchishin/zoomcamp2023/blob/main/week2/hw3.sql)
 
 ## TODO
 
