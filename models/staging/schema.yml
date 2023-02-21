@@ -8,3 +8,22 @@ sources:
     tables:
       - name: tripdata_partitioned
       - name: tripdata_nonpartitioned
+
+models:
+  - name: stg_tripdata
+    description: >
+      first created table from BQ
+      columns:
+      - name: PUlocationID
+        tests:
+          - not_null
+            severity:warn
+      - name: DOlocationID
+        tests:
+          - not_null
+            severity:warn
+    # columns:
+    # - name: SR_Flag
+    #   tests:
+    #     - not_null:
+    #         severity: warn
